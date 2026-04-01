@@ -84,13 +84,59 @@ const categories = ref([]);
 const bankAccounts = ref([]);
 const transactions = ref([]);
 const statusMessage = ref('กำลังโหลดข้อมูล...');
-const lineMid = ref('grnjvgml[o');
+const lineMid = ref('');
 const currentUser = ref(null);
 const pendingUser = ref(null);
 const loginChecked = ref(false);
 
+const LIFF_ID = import.meta.env.VITE_LIFF_ID || 'YOUR_LIFF_ID';
+
+const loadLiffScript = () => {
+  return new Promise((resolve, reject) => {
+    if (globalThis.liff) {
+      return resolve();
+    }
+
+    const existingScript = document.querySelector('script[data-liff-sdk]');
+    if (existingScript) {
+      existingScript.addEventListener('load', () => resolve());
+      existingScript.addEventListener('error', () => reject(new Error('Failed to load LIFF SDK')));
+      return;
+    }
+
+    const script = document.createElement('script');
+    script.src = 'https://static.line-scdn.net/liff/edge/2.1/sdk.js';
+    script.dataset.liffSdk = 'true';
+    script.onload = () => resolve();
+    script.onerror = () => reject(new Error('Failed to load LIFF SDK'));
+    document.head.appendChild(script);
+  });
+};
+
+const initLiff = async () => {
+  try {
+    await loadLiffScript();
+
+    if (!globalThis.liff || typeof globalThis.liff.init !== 'function') {
+      throw new Error('LIFF SDK not available');
+    }
+
+    await globalThis.liff.init({ liffId: LIFF_ID });
+
+    if (typeof globalThis.liff.isLoggedIn === 'function' && !globalThis.liff.isLoggedIn()) {
+      globalThis.liff.login();
+      return false;
+    }
+
+    return true;
+  } catch (error) {
+    console.warn('LIFF initialization failed', error);
+    return false;
+  }
+};
+
 const loadLineMid = async () => {
-  let mid = 'grnjvgml[o';
+  let mid = '';
   if (globalThis.liff && typeof globalThis.liff.getProfile === 'function') {
     try {
       const profile = await globalThis.liff.getProfile();
@@ -181,6 +227,7 @@ const handleUserReady = async (user) => {
 };
 
 onMounted(async () => {
+  await initLiff();
   await checkCurrentUser();
 });
 </script>
