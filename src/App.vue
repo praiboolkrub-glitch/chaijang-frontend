@@ -210,10 +210,10 @@ const initLiff = async () => {
 
     await globalThis.liff.init({ liffId: LIFF_ID });
 
-    if (typeof globalThis.liff.isLoggedIn === 'function' && !globalThis.liff.isLoggedIn()) {
-      globalThis.liff.login();
-      return false;
-    }
+    // if (typeof globalThis.liff.isLoggedIn === 'function' && !globalThis.liff.isLoggedIn()) {
+    //   globalThis.liff.login();
+    //   return false;
+    // }
 
     return true;
   } catch (error) {
