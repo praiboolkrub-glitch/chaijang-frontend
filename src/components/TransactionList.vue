@@ -22,7 +22,7 @@
           class="rounded-3xl border border-slate-200 bg-slate-50 p-4 shadow-sm"
         >
           <div class="flex items-center justify-between gap-4">
-            <span class="text-sm font-semibold text-slate-900">{{ item.expense_date }}</span>
+            <span class="text-sm font-semibold text-slate-900">{{ formatDate(item.expense_date) }}</span>
             <span
               :class="[
                 'rounded-full px-3 py-1 text-xs font-semibold',
@@ -47,7 +47,7 @@
             </div>
             <div class="flex items-center justify-between gap-2">
               <span class="font-medium">ผู้ใช้</span>
-              <span>{{ item.user_name || '-' }}</span>
+              <span class="max-w-[8rem] truncate text-right">{{ item.user_name || '-' }}</span>
             </div>
             <div class="flex items-center justify-between gap-2">
               <span class="font-medium">จำนวน</span>
@@ -72,9 +72,9 @@
           </thead>
           <tbody>
             <tr v-for="item in transactions" :key="item.id" class="border-b border-slate-100 hover:bg-slate-50">
-              <td class="px-3 py-3">{{ item.expense_date }}</td>
+              <td class="px-3 py-3">{{ formatDate(item.expense_date) }}</td>
               <td class="px-3 py-3">{{ item.title || '-' }}</td>
-              <td class="px-3 py-3">{{ item.user_name || '-' }}</td>
+              <td class="px-3 py-3"><span class="inline-block max-w-[10rem] truncate">{{ item.user_name || '-' }}</span></td>
               <td class="px-3 py-3 capitalize">{{ item.transaction_type }}</td>
               <td class="px-3 py-3">{{ item.bank_account_name || '-' }}</td>
               <td class="px-3 py-3">{{ formatMoney(item.amount) }}</td>
@@ -91,6 +91,17 @@
 const props = defineProps({
   transactions: Array,
 });
+
+const formatDate = (value) => {
+  if (!value) return '-';
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return '-';
+  return date.toLocaleDateString('th-TH', {
+    day: '2-digit',
+    month: 'short',
+    year: 'numeric',
+  });
+};
 
 const formatMoney = (value) => {
   if (value === null || value === undefined) return '-';

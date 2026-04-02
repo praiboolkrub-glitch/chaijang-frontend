@@ -25,6 +25,16 @@
             required
           />
         </label>
+        <label class="block">
+          <span class="text-sm font-medium text-slate-700">ประเภท</span>
+          <select
+            v-model="form.transaction_type"
+            class="mt-2 w-full rounded-2xl border border-slate-300 bg-slate-50 px-4 py-3 text-sm outline-none focus:border-indigo-500"
+          >
+            <option value="expense">ใช้จ่าย</option>
+            <option value="income">เงินเข้า</option>
+          </select>
+        </label>
         <label class="block sm:col-span-2">
           <span class="text-sm font-medium text-slate-700">คำอธิบาย</span>
           <input
@@ -54,6 +64,7 @@
           <thead>
             <tr class="border-b border-slate-200 text-slate-500">
               <th class="px-4 py-3">ชื่อ</th>
+              <th class="px-4 py-3">ประเภท</th>
               <th class="px-4 py-3">คำอธิบาย</th>
               <th class="px-4 py-3">การจัดการ</th>
             </tr>
@@ -61,6 +72,7 @@
           <tbody>
             <tr v-for="category in categories" :key="category.id" class="border-b border-slate-100 hover:bg-slate-50">
               <td class="px-4 py-4 font-medium text-slate-900">{{ category.name }}</td>
+              <td class="px-4 py-4 text-slate-600 capitalize">{{ category.transaction_type || 'expense' }}</td>
               <td class="px-4 py-4 text-slate-600">{{ category.description || '-' }}</td>
               <td class="px-4 py-4 text-sm text-slate-700">
                 <button
@@ -74,7 +86,7 @@
               </td>
             </tr>
             <tr v-if="categories.length === 0">
-              <td colspan="3" class="px-4 py-6 text-center text-slate-500">ยังไม่มีหมวดหมู่</td>
+              <td colspan="4" class="px-4 py-6 text-center text-slate-500">ยังไม่มีหมวดหมู่</td>
             </tr>
           </tbody>
         </table>
@@ -88,7 +100,7 @@ import { ref, onMounted } from 'vue';
 import { fetchCategories, createCategory, updateCategory, deleteCategory } from '../api';
 
 const categories = ref([]);
-const form = ref({ id: null, name: '', description: '' });
+const form = ref({ id: null, name: '', description: '', transaction_type: 'expense' });
 const message = ref('');
 
 const loadCategories = async () => {
@@ -102,7 +114,7 @@ const loadCategories = async () => {
 };
 
 const resetForm = () => {
-  form.value = { id: null, name: '', description: '' };
+  form.value = { id: null, name: '', description: '', transaction_type: 'expense' };
   message.value = '';
 };
 
@@ -114,11 +126,13 @@ const handleSubmit = async () => {
       res = await updateCategory(form.value.id, {
         name: form.value.name,
         description: form.value.description,
+        transaction_type: form.value.transaction_type,
       });
     } else {
       res = await createCategory({
         name: form.value.name,
         description: form.value.description,
+        transaction_type: form.value.transaction_type,
       });
     }
 
@@ -136,7 +150,12 @@ const handleSubmit = async () => {
 };
 
 const editCategory = (category) => {
-  form.value = { id: category.id, name: category.name, description: category.description };
+  form.value = {
+    id: category.id,
+    name: category.name,
+    description: category.description,
+    transaction_type: category.transaction_type || 'expense',
+  };
   message.value = 'แก้ไขหมวดหมู่: ปรับข้อมูลและกดบันทึก';
 };
 

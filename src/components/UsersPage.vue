@@ -58,6 +58,10 @@ const props = defineProps({
     type: String,
     default: 'grnjvgml[o',
   },
+  lineProfile: {
+    type: Object,
+    default: () => ({ displayName: '', pictureUrl: '' }),
+  },
   existingUser: {
     type: Object,
     default: null,
@@ -88,6 +92,8 @@ const handleSubmit = async () => {
   const payload = {
     household_id: form.value.household_id || undefined,
     line_mid: props.lineMid || undefined,
+    display_name: props.lineProfile?.displayName || undefined,
+    profile_picture: props.lineProfile?.pictureUrl || undefined,
   };
 
   try {
