@@ -207,7 +207,6 @@ const initLiff = async () => {
     if (!globalThis.liff || typeof globalThis.liff.init !== 'function') {
       throw new Error('LIFF SDK not available');
     }
-    console.log('Initializing LIFF with ID:', LIFF_ID);
     await globalThis.liff.init({ liffId: LIFF_ID });
 
     // if (typeof globalThis.liff.isLoggedIn === 'function' && !globalThis.liff.isLoggedIn()) {
@@ -225,8 +224,9 @@ const initLiff = async () => {
 const loadLineMid = async () => {
   let mid = '';
   lineProfile.value = { displayName: '', pictureUrl: '' };
-
+  console.log('Initializing LIFF with ID 1:', LIFF_ID);
   if (globalThis.liff && typeof globalThis.liff.getProfile === 'function') {
+    console.log('Initializing LIFF with ID:', LIFF_ID);
     try {
       const profile = await globalThis.liff.getProfile();
       if (profile?.userId) {
