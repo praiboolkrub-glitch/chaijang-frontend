@@ -223,7 +223,7 @@ const initLiff = async () => {
 };
 
 const loadLineMid = async () => {
-  let mid = '1234';
+  let mid = '';
   lineProfile.value = { displayName: '', pictureUrl: '' };
 
   if (globalThis.liff && typeof globalThis.liff.getProfile === 'function') {
