@@ -298,6 +298,22 @@ const handlePopState = () => {
   currentPage.value = routeToPage(window.location.pathname);
 };
 
+const lockPortraitOrientation = async () => {
+  try {
+    if (screen?.orientation?.lock) {
+      await screen.orientation.lock('portrait');
+    } else if (screen?.lockOrientation) {
+      screen.lockOrientation('portrait');
+    } else if (screen?.mozLockOrientation) {
+      screen.mozLockOrientation('portrait');
+    } else if (screen?.msLockOrientation) {
+      screen.msLockOrientation('portrait');
+    }
+  } catch (error) {
+    console.warn('Unable to lock portrait orientation', error);
+  }
+};
+
 const formatMoney = (value) => {
   if (value === null || value === undefined) return '-';
   return new Intl.NumberFormat('th-TH', {
@@ -499,6 +515,7 @@ onMounted(async () => {
   setPageFromPath();
   window.addEventListener('popstate', handlePopState);
   await initLiff();
+  await lockPortraitOrientation();
   await checkCurrentUser();
 });
 </script>
