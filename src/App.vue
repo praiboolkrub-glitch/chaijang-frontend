@@ -207,7 +207,7 @@ const initLiff = async () => {
     if (!globalThis.liff || typeof globalThis.liff.init !== 'function') {
       throw new Error('LIFF SDK not available');
     }
-
+    console.log('Initializing LIFF with ID:', LIFF_ID);
     await globalThis.liff.init({ liffId: LIFF_ID });
 
     // if (typeof globalThis.liff.isLoggedIn === 'function' && !globalThis.liff.isLoggedIn()) {
