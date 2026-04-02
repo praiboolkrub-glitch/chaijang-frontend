@@ -1,5 +1,5 @@
 <template>
-  <div class="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6 max-h-[calc(100vh-180px)] overflow-y-auto sm:max-h-none">
+  <div class="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
     <div class="mb-5 space-y-2">
       <h2 class="text-xl font-semibold text-slate-900">บันทึกรายรับ / รายจ่าย</h2>
       <p class="text-sm text-slate-500">เลือกบัญชีหลักแล้วระบบจะเลือกให้โดยอัตโนมัติ</p>
@@ -121,6 +121,10 @@ const props = defineProps({
   categories: Array,
   bankAccounts: Array,
   currentUserId: Number,
+  defaultTransactionType: {
+    type: String,
+    default: 'expense',
+  },
 });
 const emits = defineEmits(['submit']);
 
@@ -128,7 +132,7 @@ const form = reactive({
   user_id: props.currentUserId || null,
   category_id: '',
   bank_account_id: '',
-  transaction_type: 'expense',
+  transaction_type: props.defaultTransactionType || 'expense',
   title: '',
   amount: '',
   notes: '',
@@ -166,6 +170,16 @@ watch(
       form.category_id = matching.id;
     }
   }
+);
+
+watch(
+  () => props.defaultTransactionType,
+  (defaultTransactionType) => {
+    if (defaultTransactionType && form.transaction_type !== defaultTransactionType) {
+      form.transaction_type = defaultTransactionType;
+    }
+  },
+  { immediate: true }
 );
 
 watch(

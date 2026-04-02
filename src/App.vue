@@ -65,7 +65,7 @@
               <button
                 v-for="page in visiblePages"
                 :key="page.key"
-                @click="currentPage = page.key"
+                @click="navigateToPage(page.key)"
                 :class="[
                   'rounded-full px-5 py-2 text-sm font-semibold transition',
                   currentPage === page.key ? 'bg-indigo-600 text-white' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
@@ -76,14 +76,41 @@
             </div>
           </div>
 
-          <TransactionsPage
-            v-if="currentPage === 'transactions'"
-            :categories="categories"
-            :bankAccounts="bankAccounts"
-            :transactions="transactions"
-            :currentUserId="currentUser.id"
-            @submit="handleCreateTransaction"
-          />
+          <div v-if="currentPage === 'transactions'">
+            <TransactionsPage
+              :categories="categories"
+              :bankAccounts="bankAccounts"
+              :transactions="transactions"
+              :currentUserId="currentUser.id"
+              @submit="handleCreateTransaction"
+            />
+          </div>
+
+          <div v-else-if="currentPage === 'expense' || currentPage === 'income'">
+            <div class="mb-6 flex flex-wrap items-center justify-between gap-4 rounded-3xl bg-white p-4 shadow-sm">
+              <div>
+                <p class="text-sm text-slate-500">บันทึกรายการ</p>
+                <h2 class="text-xl font-semibold text-slate-900">
+                  {{ currentPage === 'income' ? 'ลงบันทึกรายรับ' : 'ลงบันทึกรายจ่าย' }}
+                </h2>
+              </div>
+              <button
+                type="button"
+                @click="navigateToPage('transactions')"
+                class="inline-flex items-center gap-2 rounded-full bg-slate-100 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-200"
+              >
+                กลับไปหน้าหลัก
+              </button>
+            </div>
+            <TransactionsPage
+              :categories="categories"
+              :bankAccounts="bankAccounts"
+              :transactions="transactions"
+              :currentUserId="currentUser.id"
+              :defaultTransactionType="currentPage"
+              @submit="handleCreateTransaction"
+            />
+          </div>
 
           <HouseholdsPage v-if="currentPage === 'households'" />
           <AccountsPage v-if="currentPage === 'accounts'" :currentUserId="currentUser ? currentUser.id : null" />
@@ -120,6 +147,8 @@ const pages = [
   { key: 'users', label: 'Users' },
   { key: 'reports', label: 'Reports' },
 ];
+const entryPages = ['expense', 'income'];
+const validPages = [...pages.map((page) => page.key), ...entryPages];
 const visiblePages = computed(() =>
   pages.filter(
     (page) =>
@@ -233,6 +262,40 @@ const loadTransactions = async () => {
     console.error(error);
     statusMessage.value = 'เกิดข้อผิดพลาดในการโหลดธุรกรรม';
   }
+};
+
+const routeToPage = (path) => {
+  const pageKey = String(path || '')
+    .replace(/^\/+|\/+$/g, '')
+    .toLowerCase();
+  if (!pageKey || pageKey === 'transactions') return 'transactions';
+  return validPages.includes(pageKey) ? pageKey : 'transactions';
+};
+
+const pathForPage = (page) => {
+  if (page === 'transactions') return '/';
+  return `/${page}`;
+};
+
+const navigateToPage = (page) => {
+  if (!validPages.includes(page)) {
+    page = 'transactions';
+  }
+  currentPage.value = page;
+  if (window && window.history && typeof window.history.pushState === 'function') {
+    window.history.pushState({ page }, '', pathForPage(page));
+  }
+};
+
+const setPageFromPath = () => {
+  currentPage.value = routeToPage(window.location.pathname);
+  if (window && window.history && typeof window.history.replaceState === 'function') {
+    window.history.replaceState({ page: currentPage.value }, '', pathForPage(currentPage.value));
+  }
+};
+
+const handlePopState = () => {
+  currentPage.value = routeToPage(window.location.pathname);
 };
 
 const formatMoney = (value) => {
@@ -399,7 +462,9 @@ const checkCurrentUser = async () => {
       if (response.data.household_id) {
         currentUser.value = userData;
         statusMessage.value = `ยินดีต้อนรับ ${userData.display_name || userData.username}`;
-        currentPage.value = 'transactions';
+        if (!entryPages.includes(currentPage.value)) {
+          currentPage.value = 'transactions';
+        }
         await loadData();
         await loadTransactions();
       } else {
@@ -422,13 +487,17 @@ const checkCurrentUser = async () => {
 const handleUserReady = async (user) => {
   currentUser.value = user;
   pendingUser.value = null;
-  currentPage.value = 'transactions';
+  if (!entryPages.includes(currentPage.value)) {
+    currentPage.value = 'transactions';
+  }
   statusMessage.value = `ยินดีต้อนรับ ${user.username || 'ผู้ใช้ใหม่'}`;
   await loadData();
   await loadTransactions();
 };
 
 onMounted(async () => {
+  setPageFromPath();
+  window.addEventListener('popstate', handlePopState);
   await initLiff();
   await checkCurrentUser();
 });

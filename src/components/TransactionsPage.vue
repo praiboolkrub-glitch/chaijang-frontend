@@ -4,6 +4,7 @@
       :categories="categories"
       :bankAccounts="bankAccounts"
       :currentUserId="currentUserId"
+      :defaultTransactionType="defaultTransactionType"
       @submit="handleCreateTransaction"
     />
     <TransactionList :transactions="transactions" />
@@ -19,6 +20,10 @@ const props = defineProps({
   bankAccounts: Array,
   transactions: Array,
   currentUserId: Number,
+  defaultTransactionType: {
+    type: String,
+    default: 'expense',
+  },
 });
 const emits = defineEmits(['submit']);
 
