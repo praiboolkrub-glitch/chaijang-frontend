@@ -12,15 +12,39 @@
             />
             <div v-else class="flex h-full w-full items-center justify-center text-slate-500">👤</div>
           </div>
-          <div>
-            <p class="text-sm text-slate-100">สวัสดี</p>
-            <h1 class="text-3xl font-semibold">
-              {{ currentUser?.display_name || currentUser?.username || 'Expense Tracker' }}
-            </h1>
+            <div class="flex-1 min-w-0">
+              <p class="text-sm text-slate-100">สวัสดี</p>
+              <h1 class="text-3xl font-semibold">
+                {{ currentUser?.display_name || currentUser?.username || 'Expense Tracker' }}
+              </h1>
+            </div>
           </div>
-        </div>
-        <p class="mt-3 max-w-2xl text-slate-100">ระบบบันทึกรายรับ-รายจ่าย พร้อมจัดการ household, bank account, transaction และรายงาน</p>
-      </header>
+
+          <div class="mt-6 flex items-center justify-between gap-4">
+            <div class="grid w-full gap-4 sm:grid-cols-2">
+              <div class="rounded-3xl bg-slate-50 p-4 text-slate-900">
+                <div class="text-sm text-slate-500">ยอดค่าใช้จ่ายรวม</div>
+                <div class="mt-3 text-2xl font-semibold text-rose-700">
+                  {{ showHeaderTotals ? formatMoney(headerExpenseTotal) : '•••' }}
+                </div>
+              </div>
+              <div class="rounded-3xl bg-slate-50 p-4 text-slate-900">
+                <div class="text-sm text-slate-500">ยอดคงเหลือสุทธิ</div>
+                <div class="mt-3 text-2xl font-semibold text-sky-700">
+                  {{ showHeaderTotals ? formatMoney(headerNetTotal) : '•••' }}
+                </div>
+              </div>
+            </div>
+            <button
+              type="button"
+              @click="showHeaderTotals = !showHeaderTotals"
+              class="inline-flex h-10 w-10 items-center justify-center rounded-full bg-white text-slate-700 shadow-sm transition hover:bg-slate-100"
+              :aria-label="showHeaderTotals ? 'ซ่อนยอด' : 'แสดงยอด'"
+            >
+              <span aria-hidden="true">{{ showHeaderTotals ? '👁️' : '🙈' }}</span>
+            </button>
+          </div>
+        </header>
 
       <div class="space-y-8">
         <div v-if="!loginChecked" class="rounded-3xl bg-white p-6 text-slate-600 shadow-sm">
@@ -105,10 +129,12 @@ const visiblePages = computed(() =>
 const currentPage = ref('transactions');
 const categories = ref([]);
 const bankAccounts = ref([]);
+const householdAccounts = ref([]);
 const transactions = ref([]);
 const statusMessage = ref('กำลังโหลดข้อมูล...');
 const lineMid = ref(''); // Default MID for testing
 const lineProfile = ref({ displayName: '', pictureUrl: '' });
+const showHeaderTotals = ref(true);
 const currentUser = ref(null);
 const pendingUser = ref(null);
 const loginChecked = ref(false);
@@ -184,12 +210,14 @@ const loadLineMid = async () => {
 
 const loadData = async () => {
   try {
-    const [categoriesResponse, bankResponse] = await Promise.all([
+    const [categoriesResponse, bankResponse, householdBankResponse] = await Promise.all([
       fetchCategories(),
       currentUser.value?.id ? fetchBankAccounts(currentUser.value.id) : Promise.resolve({ success: true, data: [] }),
+      currentUser.value?.household_id ? fetchBankAccounts(undefined, currentUser.value.household_id) : Promise.resolve({ success: true, data: [] }),
     ]);
     categories.value = categoriesResponse.data || [];
     bankAccounts.value = bankResponse.data || [];
+    householdAccounts.value = householdBankResponse.data || [];
   } catch (error) {
     console.error(error);
     statusMessage.value = 'เกิดข้อผิดพลาดในการโหลดข้อมูล';
@@ -204,6 +232,141 @@ const loadTransactions = async () => {
   } catch (error) {
     console.error(error);
     statusMessage.value = 'เกิดข้อผิดพลาดในการโหลดธุรกรรม';
+  }
+};
+
+const formatMoney = (value) => {
+  if (value === null || value === undefined) return '-';
+  return new Intl.NumberFormat('th-TH', {
+    style: 'currency',
+    currency: 'THB',
+  }).format(value);
+};
+
+const headerExpenseTotal = computed(() =>
+  transactions.value.reduce(
+    (sum, item) => sum + (item.transaction_type === 'expense' ? Number(item.amount) : 0),
+    0,
+  ),
+);
+
+const headerNetTotal = computed(() =>
+  transactions.value.reduce(
+    (sum, item) => sum + (item.transaction_type === 'income' ? Number(item.amount) : -Number(item.amount)),
+    0,
+  ),
+);
+
+const householdAccountBalanceTotal = computed(() =>
+  householdAccounts.value.reduce((sum, account) => sum + Number(account.balance || 0), 0),
+);
+
+const createFlexTransactionMessage = (transaction) => {
+  const typeLabel = transaction.transaction_type === 'income' ? 'เงินเข้า' : 'เงินออก';
+  const amountLabel = formatMoney(Number(transaction.amount) || 0);
+  const categoryName =
+    categories.value.find((category) => String(category.id) === String(transaction.category_id))?.name ||
+    transaction.category_name ||
+    '-';
+  const bankName =
+    bankAccounts.value.find((account) => String(account.id) === String(transaction.bank_account_id))?.name ||
+    transaction.bank_account_name ||
+    '-';
+  const dateLabel = new Date(transaction.expense_date || new Date()).toLocaleDateString('th-TH', {
+    day: '2-digit',
+    month: 'short',
+    year: 'numeric',
+  });
+
+  return {
+    type: 'flex',
+    altText: `${typeLabel} ${amountLabel}`,
+    contents: {
+      type: 'bubble',
+      header: {
+        type: 'box',
+        layout: 'vertical',
+        contents: [
+          {
+            type: 'text',
+            text: typeLabel,
+            weight: 'bold',
+            size: 'lg',
+            color: transaction.transaction_type === 'income' ? '#0f766e' : '#b91c1c',
+          },
+        ],
+      },
+      body: {
+        type: 'box',
+        layout: 'vertical',
+        spacing: 'md',
+        contents: [
+          {
+            type: 'text',
+            text: titleCase(transaction.title || '-'),
+            weight: 'bold',
+            size: 'md',
+            wrap: true,
+          },
+          {
+            type: 'box',
+            layout: 'baseline',
+            contents: [
+              { type: 'text', text: 'วันที่', color: '#64748b', size: 'sm', flex: 2 },
+              { type: 'text', text: dateLabel, color: '#0f172a', size: 'sm', flex: 3 },
+            ],
+          },
+          {
+            type: 'box',
+            layout: 'baseline',
+            contents: [
+              { type: 'text', text: 'หมวดหมู่', color: '#64748b', size: 'sm', flex: 2 },
+              { type: 'text', text: categoryName, color: '#0f172a', size: 'sm', flex: 3 },
+            ],
+          },
+          {
+            type: 'box',
+            layout: 'baseline',
+            contents: [
+              { type: 'text', text: 'บัญชี', color: '#64748b', size: 'sm', flex: 2 },
+              { type: 'text', text: bankName, color: '#0f172a', size: 'sm', flex: 3 },
+            ],
+          },
+        ],
+      },
+      footer: {
+        type: 'box',
+        layout: 'vertical',
+        contents: [
+          {
+            type: 'text',
+            text: amountLabel,
+            weight: 'bold',
+            size: 'xl',
+            color: transaction.transaction_type === 'income' ? '#0f766e' : '#b91c1c',
+            align: 'end',
+          },
+        ],
+      },
+    },
+  };
+};
+
+const titleCase = (text) => {
+  if (!text) return '';
+  return String(text)
+    .toLowerCase()
+    .replace(/\b\w/g, (char) => char.toUpperCase());
+};
+
+const sendLineTransactionNotification = async (transaction) => {
+  if (!globalThis.liff || typeof globalThis.liff.sendMessages !== 'function') {
+    return;
+  }
+  try {
+    await globalThis.liff.sendMessages([createFlexTransactionMessage(transaction)]);
+  } catch (err) {
+    console.warn('ส่งข้อความ LINE ไม่ได้', err);
   }
 };
 

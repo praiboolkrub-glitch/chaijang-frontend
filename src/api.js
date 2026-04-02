@@ -38,10 +38,13 @@ export const deleteCategory = async (id) => {
   return response.json();
 };
 
-export const fetchBankAccounts = async (userId) => {
+export const fetchBankAccounts = async (userId, householdId) => {
   const url = new URL(`${baseUrl}/api/bank-accounts`);
   if (userId) {
     url.searchParams.append('user_id', userId);
+  }
+  if (householdId) {
+    url.searchParams.append('household_id', householdId);
   }
   const response = await fetch(url.toString());
   return response.json();

@@ -93,11 +93,17 @@
 
     <div class="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
       <h3 class="text-lg font-semibold text-slate-900">ยอดเงินคงเหลือในบัญชี</h3>
-      <div class="mt-4 grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-        <div v-for="account in accounts" :key="account.id" class="rounded-3xl bg-slate-50 p-5">
-          <div class="text-sm text-slate-500">{{ account.name }}</div>
-          <div class="mt-2 text-xl font-semibold text-slate-900">{{ formatMoney(account.balance) }}</div>
-          <div class="mt-1 text-sm text-slate-500">{{ account.bank_name || 'ไม่มีธนาคาร' }}</div>
+      <div class="mt-4 grid gap-4 lg:grid-cols-[1.5fr_2fr]">
+        <div class="rounded-3xl bg-slate-50 p-5">
+          <div class="text-sm text-slate-500">ยอดเงินคงเหลือทั้งหมดในบ้าน</div>
+          <div class="mt-3 text-2xl font-semibold text-slate-900">{{ formatMoney(accountTotal) }}</div>
+        </div>
+        <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+          <div v-for="account in accounts" :key="account.id" class="rounded-3xl bg-slate-50 p-5">
+            <div class="text-sm text-slate-500">{{ account.name }}</div>
+            <div class="mt-2 text-xl font-semibold text-slate-900">{{ formatMoney(account.balance) }}</div>
+            <div class="mt-1 text-sm text-slate-500">{{ account.bank_name || 'ไม่มีธนาคาร' }}</div>
+          </div>
         </div>
       </div>
     </div>
@@ -226,11 +232,15 @@ const props = defineProps({
 const loadData = async () => {
   const [txResponse, accountResponse] = await Promise.all([
     fetchTransactions(props.householdId),
-    fetchBankAccounts(),
+    props.householdId ? fetchBankAccounts(undefined, props.householdId) : Promise.resolve({ success: true, data: [] }),
   ]);
   if (txResponse.success) transactions.value = txResponse.data || [];
   if (accountResponse.success) accounts.value = accountResponse.data || [];
 };
+
+const accountTotal = computed(() =>
+  accounts.value.reduce((sum, account) => sum + Number(account.balance || 0), 0),
+);
 
 const formatMoney = (value) => {
   if (value === null || value === undefined) return '-';
