@@ -169,6 +169,9 @@ const pendingUser = ref(null);
 const loginChecked = ref(false);
 
 const LIFF_ID = import.meta.env.VITE_LIFF_ID || 'YOUR_LIFF_ID';
+if (!import.meta.env.VITE_LIFF_ID || LIFF_ID === 'YOUR_LIFF_ID') {
+  console.warn('VITE_LIFF_ID is not configured. LIFF initialization will fail unless you set the real LIFF ID.');
+}
 
 const loadLiffScript = () => {
   return new Promise((resolve, reject) => {
@@ -176,7 +179,12 @@ const loadLiffScript = () => {
       return resolve();
     }
 
-    const existingScript = document.querySelector('script[data-liff-sdk]');
+    const existingScript =
+      document.querySelector('script[data-liff-sdk]') ||
+      Array.from(document.scripts).find((script) =>
+        script.src?.includes('https://static.line-scdn.net/liff/edge/2.1/sdk.js')
+      );
+
     if (existingScript) {
       existingScript.addEventListener('load', () => resolve());
       existingScript.addEventListener('error', () => reject(new Error('Failed to load LIFF SDK')));
