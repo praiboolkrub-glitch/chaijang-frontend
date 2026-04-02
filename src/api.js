@@ -38,13 +38,21 @@ export const deleteCategory = async (id) => {
   return response.json();
 };
 
-export const fetchBankAccounts = async () => {
-  const response = await fetch(`${baseUrl}/api/bank-accounts`);
+export const fetchBankAccounts = async (userId) => {
+  const url = new URL(`${baseUrl}/api/bank-accounts`);
+  if (userId) {
+    url.searchParams.append('user_id', userId);
+  }
+  const response = await fetch(url.toString());
   return response.json();
 };
 
-export const fetchTransactions = async () => {
-  const response = await fetch(`${baseUrl}/api/transactions`);
+export const fetchTransactions = async (householdId) => {
+  const url = new URL(`${baseUrl}/api/transactions`);
+  if (householdId) {
+    url.searchParams.append('household_id', householdId);
+  }
+  const response = await fetch(url.toString());
   return response.json();
 };
 
@@ -72,6 +80,14 @@ export const createHousehold = async (payload) => {
 export const createBankAccount = async (payload) => {
   const response = await fetch(`${baseUrl}/api/bank-accounts`, {
     method: 'POST',
+    ...jsonOptions(payload),
+  });
+  return response.json();
+};
+
+export const updateBankAccount = async (id, payload) => {
+  const response = await fetch(`${baseUrl}/api/bank-accounts/${id}`, {
+    method: 'PUT',
     ...jsonOptions(payload),
   });
   return response.json();

@@ -46,6 +46,10 @@
               <span>{{ item.bank_account_name || '-' }}</span>
             </div>
             <div class="flex items-center justify-between gap-2">
+              <span class="font-medium">ผู้ใช้</span>
+              <span>{{ item.user_name || '-' }}</span>
+            </div>
+            <div class="flex items-center justify-between gap-2">
               <span class="font-medium">จำนวน</span>
               <span class="text-slate-900">{{ formatMoney(item.amount) }}</span>
             </div>
@@ -59,6 +63,7 @@
             <tr>
               <th class="px-3 py-3">วันที่</th>
               <th class="px-3 py-3">หัวข้อ</th>
+              <th class="px-3 py-3">ผู้ใช้</th>
               <th class="px-3 py-3">ประเภท</th>
               <th class="px-3 py-3">บัญชี</th>
               <th class="px-3 py-3">จำนวน</th>
@@ -68,7 +73,8 @@
           <tbody>
             <tr v-for="item in transactions" :key="item.id" class="border-b border-slate-100 hover:bg-slate-50">
               <td class="px-3 py-3">{{ item.expense_date }}</td>
-              <td class="px-3 py-3">{{ item.title }}</td>
+              <td class="px-3 py-3">{{ item.title || '-' }}</td>
+              <td class="px-3 py-3">{{ item.user_name || '-' }}</td>
               <td class="px-3 py-3 capitalize">{{ item.transaction_type }}</td>
               <td class="px-3 py-3">{{ item.bank_account_name || '-' }}</td>
               <td class="px-3 py-3">{{ formatMoney(item.amount) }}</td>

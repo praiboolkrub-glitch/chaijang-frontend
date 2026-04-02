@@ -45,10 +45,10 @@
           />
 
           <HouseholdsPage v-if="currentPage === 'households'" />
-          <AccountsPage v-if="currentPage === 'accounts'" />
+          <AccountsPage v-if="currentPage === 'accounts'" :currentUserId="currentUser ? currentUser.id : null" />
           <CategoriesPage v-if="currentPage === 'categories'" />
           <UsersPage v-if="currentPage === 'users'" :lineMid="lineMid" :existingUser="currentUser" @userReady="handleUserReady" />
-          <ReportsPage v-if="currentPage === 'reports'" />
+          <ReportsPage v-if="currentPage === 'reports'" :householdId="currentUser?.household_id" />
         </div>
       </div>
     </div>
@@ -153,7 +153,10 @@ const loadLineMid = async () => {
 
 const loadData = async () => {
   try {
-    const [categoriesResponse, bankResponse] = await Promise.all([fetchCategories(), fetchBankAccounts()]);
+    const [categoriesResponse, bankResponse] = await Promise.all([
+      fetchCategories(),
+      currentUser.value?.id ? fetchBankAccounts(currentUser.value.id) : Promise.resolve({ success: true, data: [] }),
+    ]);
     categories.value = categoriesResponse.data || [];
     bankAccounts.value = bankResponse.data || [];
   } catch (error) {
@@ -164,7 +167,7 @@ const loadData = async () => {
 
 const loadTransactions = async () => {
   try {
-    const response = await fetchTransactions();
+    const response = await fetchTransactions(currentUser.value?.household_id);
     transactions.value = response.data || [];
     statusMessage.value = 'ระบบพร้อมใช้งาน';
   } catch (error) {

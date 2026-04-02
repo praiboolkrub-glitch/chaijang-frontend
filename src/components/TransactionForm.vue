@@ -2,21 +2,40 @@
   <div class="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
     <div class="mb-5 space-y-2">
       <h2 class="text-xl font-semibold text-slate-900">บันทึกรายรับ / รายจ่าย</h2>
-      <p class="text-sm text-slate-500">เชื่อมต่อกับ API เพื่อบันทึก transaction ใหม่</p>
+      <p class="text-sm text-slate-500">เลือกบัญชีหลักแล้วระบบจะเลือกให้โดยอัตโนมัติ</p>
     </div>
 
     <form @submit.prevent="submitForm" class="space-y-4">
       <div class="grid gap-4 sm:grid-cols-2">
-        <label class="block">
+        <div>
           <span class="text-sm font-medium text-slate-700">ประเภท</span>
-          <select
-            v-model="form.transaction_type"
-            class="mt-1 w-full rounded-xl border border-slate-300 bg-slate-50 px-4 py-3 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"
-          >
-            <option value="expense">Expense</option>
-            <option value="income">Income</option>
-          </select>
-        </label>
+          <div class="mt-2 flex flex-wrap gap-2">
+            <button
+              type="button"
+              @click="form.transaction_type = 'expense'"
+              :class="[
+                'rounded-full px-5 py-2 text-sm font-semibold transition',
+                form.transaction_type === 'expense'
+                  ? 'bg-red-600 text-white'
+                  : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+              ]"
+            >
+              Expense
+            </button>
+            <button
+              type="button"
+              @click="form.transaction_type = 'income'"
+              :class="[
+                'rounded-full px-5 py-2 text-sm font-semibold transition',
+                form.transaction_type === 'income'
+                  ? 'bg-emerald-600 text-white'
+                  : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+              ]"
+            >
+              Income
+            </button>
+          </div>
+        </div>
       </div>
 
       <div class="grid gap-4 sm:grid-cols-2">
@@ -24,11 +43,11 @@
           <span class="text-sm font-medium text-slate-700">บัญชีธนาคาร</span>
           <select
             v-model="form.bank_account_id"
-            class="mt-1 w-full rounded-xl border border-slate-300 bg-slate-50 px-4 py-2 outline-none"
+            class="mt-1 w-full rounded-xl border border-slate-300 bg-slate-50 px-4 py-3 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"
           >
             <option value="">เลือกบัญชี</option>
             <option v-for="account in bankAccounts" :key="account.id" :value="account.id">
-              {{ account.name }} - {{ account.bank_name }}
+              {{ account.name }} {{ account.is_primary ? '(หลัก)' : '' }} - {{ account.bank_name || 'ไม่ระบุธนาคาร' }}
             </option>
           </select>
         </label>
@@ -37,7 +56,7 @@
           <span class="text-sm font-medium text-slate-700">หมวดหมู่</span>
           <select
             v-model="form.category_id"
-            class="mt-1 w-full rounded-xl border border-slate-300 bg-slate-50 px-4 py-2 outline-none"
+            class="mt-1 w-full rounded-xl border border-slate-300 bg-slate-50 px-4 py-3 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"
           >
             <option value="">เลือกหมวดหมู่</option>
             <option v-for="category in categories" :key="category.id" :value="category.id">
@@ -52,8 +71,8 @@
         <input
           v-model="form.title"
           type="text"
-          class="mt-1 w-full rounded-xl border border-slate-300 bg-slate-50 px-4 py-2 outline-none"
-          placeholder="เดินทางไปทำงาน"
+          class="mt-1 w-full rounded-xl border border-slate-300 bg-slate-50 px-4 py-3 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"
+          placeholder="เช่น ค่าอาหาร, เงินเดือน"
         />
       </label>
 
@@ -61,11 +80,12 @@
         <label class="block">
           <span class="text-sm font-medium text-slate-700">จำนวนเงิน</span>
           <input
-            v-model.number="form.amount"
-            type="number"
-            step="0.01"
+            v-model="form.amount"
+            type="tel"
+            inputmode="decimal"
+            pattern="[0-9]*"
             class="mt-1 w-full rounded-xl border border-slate-300 bg-slate-50 px-4 py-3 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"
-            placeholder="120.00"
+            placeholder="0.00"
           />
         </label>
 
@@ -74,7 +94,7 @@
           <input
             v-model="form.expense_date"
             type="date"
-            class="mt-1 w-full rounded-xl border border-slate-300 bg-slate-50 px-4 py-2 outline-none"
+            class="mt-1 w-full rounded-xl border border-slate-300 bg-slate-50 px-4 py-3 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"
           />
         </label>
       </div>
@@ -84,14 +104,14 @@
         <textarea
           v-model="form.notes"
           rows="3"
-          class="mt-1 w-full rounded-xl border border-slate-300 bg-slate-50 px-4 py-2 outline-none"
-          placeholder="รายละเอียดเพิ่มเติม"
+          class="mt-1 w-full rounded-xl border border-slate-300 bg-slate-50 px-4 py-3 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"
+          placeholder="รายละเอียดเพิ่มเติม (ไม่บังคับ)"
         ></textarea>
       </label>
 
       <button
         type="submit"
-        class="w-full rounded-2xl bg-indigo-600 px-5 py-3 text-sm font-semibold text-white transition hover:bg-indigo-700 sm:w-auto"
+        class="w-full rounded-2xl bg-indigo-600 px-5 py-3 text-sm font-semibold text-white transition hover:bg-indigo-700"
       >
         บันทึกรายการ
       </button>
@@ -110,12 +130,12 @@ const props = defineProps({
 const emits = defineEmits(['submit']);
 
 const form = reactive({
-  user_id: props.currentUserId || '',
+  user_id: props.currentUserId || null,
   category_id: '',
   bank_account_id: '',
   transaction_type: 'expense',
   title: '',
-  amount: null,
+  amount: '',
   notes: '',
   expense_date: new Date().toISOString().slice(0, 10),
 });
@@ -130,7 +150,38 @@ watch(
   { immediate: true }
 );
 
+watch(
+  () => props.categories,
+  (categories) => {
+    if (!form.category_id && Array.isArray(categories) && categories.length > 0) {
+      form.category_id = categories[0].id;
+    }
+  },
+  { immediate: true }
+);
+
+watch(
+  () => props.bankAccounts,
+  (bankAccounts) => {
+    if (!form.bank_account_id && Array.isArray(bankAccounts) && bankAccounts.length > 0) {
+      const primary = bankAccounts.find((account) => account.is_primary);
+      form.bank_account_id = (primary || bankAccounts[0]).id;
+    }
+  },
+  { immediate: true }
+);
+
 const submitForm = () => {
-  emits('submit', { ...form });
+  const amountValue = Number.parseFloat(String(form.amount).replace(',', '.'));
+  emits('submit', {
+    user_id: form.user_id,
+    category_id: form.category_id || null,
+    bank_account_id: form.bank_account_id || null,
+    transaction_type: form.transaction_type,
+    title: form.title?.trim() || null,
+    amount: Number.isNaN(amountValue) ? undefined : amountValue,
+    notes: form.notes?.trim() || null,
+    expense_date: form.expense_date || null,
+  });
 };
 </script>

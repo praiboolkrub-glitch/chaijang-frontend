@@ -105,7 +105,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, computed } from 'vue';
+import { ref, onMounted, computed, defineProps } from 'vue';
 import { fetchTransactions, fetchBankAccounts } from '../api';
 
 const transactions = ref([]);
@@ -219,8 +219,15 @@ const summary = computed(() => {
   };
 });
 
+const props = defineProps({
+  householdId: Number,
+});
+
 const loadData = async () => {
-  const [txResponse, accountResponse] = await Promise.all([fetchTransactions(), fetchBankAccounts()]);
+  const [txResponse, accountResponse] = await Promise.all([
+    fetchTransactions(props.householdId),
+    fetchBankAccounts(),
+  ]);
   if (txResponse.success) transactions.value = txResponse.data || [];
   if (accountResponse.success) accounts.value = accountResponse.data || [];
 };
