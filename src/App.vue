@@ -174,6 +174,7 @@ import {
   createTransaction,
   fetchUserByLineMid,
 } from "./api";
+import liff from "@line/liff";
 
 const pages = [
   { key: "transactions", label: "Transactions" },
@@ -206,7 +207,7 @@ const currentUser = ref(null);
 const pendingUser = ref(null);
 const loginChecked = ref(false);
 
-const LIFF_ID = import.meta.env.VITE_LIFF_ID || "2009643999-RTMcdChi";
+const LIFF_ID = import.meta.env.VITE_LIFF_ID || "YOUR_LIFF_ID";
 if (!import.meta.env.VITE_LIFF_ID || LIFF_ID === "YOUR_LIFF_ID") {
   console.warn(
     "VITE_LIFF_ID is not configured. LIFF initialization will fail unless you set the real LIFF ID."
@@ -246,28 +247,15 @@ const loadLiffScript = () => {
 
 const initLiff = async () => {
   try {
-    await loadLiffScript();
-    liff
-      .init({ liffId: "2009643999-RTMcdChi" })
-      .then((e) => {
-        console.log("LIFF initialized", e);
-        if (!liff.isLoggedIn()) {
-          liff.login(); // บังคับให้ login ก่อน
-        }
-      })
-      .catch((err) => {
-        console.error("LIFF init error", err);
-      });
-
-    // if (!globalThis.liff || typeof globalThis.liff.init !== 'function') {
-    //   throw new Error('LIFF SDK not available');
-    // }
-    // await globalThis.liff.init({ liffId: LIFF_ID });
-    // console.log('LIFF initialized', globalThis.liff);
-    // if (typeof globalThis.liff.isLoggedIn === 'function' && !globalThis.liff.isLoggedIn()) {
-    //   globalThis.liff.login();
-    //   return false;
-    // }
+    if (!globalThis.liff || typeof globalThis.liff.init !== 'function') {
+      throw new Error('LIFF SDK not available');
+    }
+    await globalThis.liff.init({ liffId: LIFF_ID });
+    console.log('LIFF initialized', globalThis.liff);
+    if (typeof globalThis.liff.isLoggedIn === 'function' && !globalThis.liff.isLoggedIn()) {
+      // globalThis.liff.login();
+      return false;
+    }
 
     return true;
   } catch (error) {
@@ -405,167 +393,11 @@ const headerNetTotal = computed(() =>
   )
 );
 
-const householdAccountBalanceTotal = computed(() =>
-  householdAccounts.value.reduce(
-    (sum, account) => sum + Number(account.balance || 0),
-    0
-  )
-);
-
-const createFlexTransactionMessage = (transaction) => {
-  const typeLabel =
-    transaction.transaction_type === "income" ? "เงินเข้า" : "เงินออก";
-  const amountLabel = formatMoney(Number(transaction.amount) || 0);
-  const categoryName =
-    categories.value.find(
-      (category) => String(category.id) === String(transaction.category_id)
-    )?.name ||
-    transaction.category_name ||
-    "-";
-  const bankName =
-    bankAccounts.value.find(
-      (account) => String(account.id) === String(transaction.bank_account_id)
-    )?.name ||
-    transaction.bank_account_name ||
-    "-";
-  const dateLabel = new Date(
-    transaction.expense_date || new Date()
-  ).toLocaleDateString("th-TH", {
-    day: "2-digit",
-    month: "short",
-    year: "numeric",
-  });
-
-  return {
-    type: "flex",
-    altText: `${typeLabel} ${amountLabel}`,
-    contents: {
-      type: "bubble",
-      header: {
-        type: "box",
-        layout: "vertical",
-        contents: [
-          {
-            type: "text",
-            text: typeLabel,
-            weight: "bold",
-            size: "lg",
-            color:
-              transaction.transaction_type === "income" ? "#0f766e" : "#b91c1c",
-          },
-        ],
-      },
-      body: {
-        type: "box",
-        layout: "vertical",
-        spacing: "md",
-        contents: [
-          {
-            type: "text",
-            text: titleCase(transaction.title || "-"),
-            weight: "bold",
-            size: "md",
-            wrap: true,
-          },
-          {
-            type: "box",
-            layout: "baseline",
-            contents: [
-              {
-                type: "text",
-                text: "วันที่",
-                color: "#64748b",
-                size: "sm",
-                flex: 2,
-              },
-              {
-                type: "text",
-                text: dateLabel,
-                color: "#0f172a",
-                size: "sm",
-                flex: 3,
-              },
-            ],
-          },
-          {
-            type: "box",
-            layout: "baseline",
-            contents: [
-              {
-                type: "text",
-                text: "หมวดหมู่",
-                color: "#64748b",
-                size: "sm",
-                flex: 2,
-              },
-              {
-                type: "text",
-                text: categoryName,
-                color: "#0f172a",
-                size: "sm",
-                flex: 3,
-              },
-            ],
-          },
-          {
-            type: "box",
-            layout: "baseline",
-            contents: [
-              {
-                type: "text",
-                text: "บัญชี",
-                color: "#64748b",
-                size: "sm",
-                flex: 2,
-              },
-              {
-                type: "text",
-                text: bankName,
-                color: "#0f172a",
-                size: "sm",
-                flex: 3,
-              },
-            ],
-          },
-        ],
-      },
-      footer: {
-        type: "box",
-        layout: "vertical",
-        contents: [
-          {
-            type: "text",
-            text: amountLabel,
-            weight: "bold",
-            size: "xl",
-            color:
-              transaction.transaction_type === "income" ? "#0f766e" : "#b91c1c",
-            align: "end",
-          },
-        ],
-      },
-    },
-  };
-};
-
 const titleCase = (text) => {
   if (!text) return "";
   return String(text)
     .toLowerCase()
     .replace(/\b\w/g, (char) => char.toUpperCase());
-};
-
-const sendLineTransactionNotification = async (transaction) => {
-  if (!globalThis.liff || typeof globalThis.liff.sendMessages !== "function") {
-    return;
-  }
-  try {
-    await globalThis.liff.sendMessages([
-      createFlexTransactionMessage(transaction),
-    ]);
-  } catch (err) {
-    console.warn("ส่งข้อความ LINE ไม่ได้", err);
-  }
 };
 
 const handleCreateTransaction = async (payload) => {
