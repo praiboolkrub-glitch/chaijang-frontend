@@ -255,7 +255,7 @@ const initLiff = async () => {
     await globalThis.liff.init({ liffId: LIFF_ID });
     console.log('LIFF initialized', globalThis.liff);
     if (typeof globalThis.liff.isLoggedIn === 'function' && !globalThis.liff.isLoggedIn()) {
-      // globalThis.liff.login();
+      console.log('LIFF user not logged in', globalThis.liff.isLoggedIn());
       return false;
     }
 
