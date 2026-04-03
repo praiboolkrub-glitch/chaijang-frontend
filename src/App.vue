@@ -283,6 +283,7 @@ const loadLineMid = async () => {
     console.log("Initializing LIFF with ID:", LIFF_ID);
     try {
       const profile = await liff.getProfile();
+      console.log("LIFF profile loaded:", profile);
       if (profile?.userId) {
         mid = profile.userId;
       }
