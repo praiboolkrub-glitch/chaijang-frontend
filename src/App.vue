@@ -246,34 +246,24 @@ const loadLiffScript = () => {
 };
 
 const initLiff = async () => {
-  try {
-      await liff.init({ liffId: LIFF_ID });
+  await loadLiffScript();
 
-      if (!liff.isLoggedIn()) {
-        liff.login();
-      }
-      return true;
-    } catch (err) {
-      console.error("LIFF init error:", err);
+  try {
+    if (!globalThis.liff || typeof globalThis.liff.init !== 'function') {
+      throw new Error('LIFF SDK not available');
+    }
+    await globalThis.liff.init({ liffId: LIFF_ID });
+    console.log('LIFF initialized', globalThis.liff);
+    if (typeof globalThis.liff.isLoggedIn === 'function' && !globalThis.liff.isLoggedIn()) {
+      // globalThis.liff.login();
       return false;
     }
 
-  // try {
-  //   if (!globalThis.liff || typeof globalThis.liff.init !== 'function') {
-  //     throw new Error('LIFF SDK not available');
-  //   }
-  //   await globalThis.liff.init({ liffId: LIFF_ID });
-  //   console.log('LIFF initialized', globalThis.liff);
-  //   if (typeof globalThis.liff.isLoggedIn === 'function' && !globalThis.liff.isLoggedIn()) {
-  //     // globalThis.liff.login();
-  //     return false;
-  //   }
-
-  //   return true;
-  // } catch (error) {
-  //   console.warn("LIFF initialization failed", error);
-  //   return false;
-  // }
+    return true;
+  } catch (error) {
+    console.warn("LIFF initialization failed", error);
+    return false;
+  }
 };
 
 const loadLineMid = async () => {
