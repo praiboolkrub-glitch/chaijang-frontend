@@ -256,6 +256,7 @@ const initLiff = async () => {
     console.log('LIFF initialized', LIFF_ID);
     console.log('LIFF user not logged in', globalThis.liff.isLoggedIn());
     if (typeof globalThis.liff.isLoggedIn === 'function' && !globalThis.liff.isLoggedIn()) {
+      globalThis.liff.login({ redirectUri: window.location.href });
       return false;
     }
 
