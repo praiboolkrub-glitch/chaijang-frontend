@@ -230,7 +230,7 @@ const initLiff = async () => {
       throw new Error('LIFF SDK not available');
     }
 
-    await liffApi.init({ liffId: LIFF_ID, withLoginOnExternalBrowser: true });
+    await liffApi.init({ liffId: LIFF_ID });
 
     const isLoggedIn = typeof liffApi.isLoggedIn === 'function' ? liffApi.isLoggedIn() : false;
     const isInClient = typeof liffApi.isInClient === 'function' ? liffApi.isInClient() : false;
@@ -242,13 +242,16 @@ const initLiff = async () => {
         console.log('LINE client detected, user not logged in: redirecting to login');
         liffApi.login({ redirectUri: window.location.href });
         return false;
+      } else {
+        console.warn('Not in LINE client; cannot login automatically. Profile access may not be available.');
+        return true; // Continue without login for external browser
       }
-      console.warn('Not logged into LINE client; profile access may not be available.');
     }
 
     return true;
   } catch (error) {
     console.error('LIFF initialization failed', error);
+    statusMessage.value = `เกิดข้อผิดพลาดในการเริ่ม LIFF: ${error.message}`;
     return false;
   }
 };
