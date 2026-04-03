@@ -250,7 +250,7 @@ const initLiff = async () => {
       await liff.init({ liffId: LIFF_ID });
 
       if (!liff.isLoggedIn()) {
-        // liff.login();
+        liff.login();
       }
       return true;
     } catch (err) {
@@ -279,11 +279,10 @@ const initLiff = async () => {
 const loadLineMid = async () => {
   let mid = "";
   lineProfile.value = { displayName: "", pictureUrl: "" };
-  console.log("Initializing LIFF with ID 1:", LIFF_ID);
-  if (globalThis.liff && typeof globalThis.liff.getProfile === "function") {
+  if (liff && typeof liff.getProfile === "function") {
     console.log("Initializing LIFF with ID:", LIFF_ID);
     try {
-      const profile = await globalThis.liff.getProfile();
+      const profile = await liff.getProfile();
       if (profile?.userId) {
         mid = profile.userId;
       }
