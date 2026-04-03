@@ -206,6 +206,7 @@ const showHeaderTotals = ref(true);
 const currentUser = ref(null);
 const pendingUser = ref(null);
 const loginChecked = ref(false);
+const liffLoginAttempted = ref(false);
 
 const LIFF_ID = import.meta.env.VITE_LIFF_ID || "YOUR_LIFF_ID";
 if (!import.meta.env.VITE_LIFF_ID || LIFF_ID === "YOUR_LIFF_ID") {
@@ -238,13 +239,17 @@ const initLiff = async () => {
     console.log('LIFF initialized', LIFF_ID, { isLoggedIn, isInClient });
 
     if (!isLoggedIn) {
-      if (isInClient) {
+      if (isInClient && !liffLoginAttempted.value) {
         console.log('LINE client detected, user not logged in: redirecting to login');
+        liffLoginAttempted.value = true;
         liffApi.login({ redirectUri: window.location.href });
         return false;
-      } else {
+      } else if (!isInClient) {
         console.warn('Not in LINE client; cannot login automatically. Profile access may not be available.');
         return true; // Continue without login for external browser
+      } else {
+        console.warn('Login already attempted, skipping to prevent loop');
+        return false;
       }
     }
 
@@ -284,10 +289,7 @@ const loadLineMid = async () => {
       };
     } catch (err) {
       console.warn("LIFF profile not available", err);
-      if (!isLoggedIn && isInClient && typeof liffApi.login === "function") {
-        console.log("Logging in via LIFF to get profile...");
-        liffApi.login({ redirectUri: window.location.href });
-      }
+      // Removed login call to prevent loop - login is handled in initLiff
     }
   } else {
     console.warn("LIFF getProfile API not available");
