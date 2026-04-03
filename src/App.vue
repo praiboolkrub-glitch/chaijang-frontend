@@ -214,55 +214,41 @@ if (!import.meta.env.VITE_LIFF_ID || LIFF_ID === "YOUR_LIFF_ID") {
   );
 }
 
-const loadLiffScript = () => {
-  return new Promise((resolve, reject) => {
-    if (globalThis.liff) {
-      return resolve();
-    }
-
-    const existingScript =
-      document.querySelector("script[data-liff-sdk]") ||
-      Array.from(document.scripts).find((script) =>
-        script.src?.includes(
-          "https://static.line-scdn.net/liff/edge/2.1/sdk.js"
-        )
-      );
-
-    if (existingScript) {
-      existingScript.addEventListener("load", () => resolve());
-      existingScript.addEventListener("error", () =>
-        reject(new Error("Failed to load LIFF SDK"))
-      );
-      return;
-    }
-
-    const script = document.createElement("script");
-    script.src = "https://static.line-scdn.net/liff/edge/2.1/sdk.js";
-    script.dataset.liffSdk = "true";
-    script.onload = () => resolve();
-    script.onerror = () => reject(new Error("Failed to load LIFF SDK"));
-    document.head.appendChild(script);
-  });
+const loadLiffScript = async () => {
+  if (globalThis.liff) {
+    return;
+  }
+  throw new Error("LIFF SDK not loaded; include the LIFF SDK script in index.html and reload the app.");
 };
 
 const initLiff = async () => {
   await loadLiffScript();
 
   try {
-    if (!globalThis.liff || typeof globalThis.liff.init !== 'function') {
+    const liffApi = globalThis.liff || liff;
+    if (!liffApi || typeof liffApi.init !== 'function') {
       throw new Error('LIFF SDK not available');
     }
-    await globalThis.liff.init({ liffId: LIFF_ID });
-    console.log('LIFF initialized', LIFF_ID);
-    console.log('LIFF user not logged in', globalThis.liff.isLoggedIn());
-    if (typeof globalThis.liff.isLoggedIn === 'function' && !globalThis.liff.isLoggedIn()) {
-      globalThis.liff.login({ redirectUri: window.location.href });
-      return false;
+
+    await liffApi.init({ liffId: LIFF_ID, withLoginOnExternalBrowser: true });
+
+    const isLoggedIn = typeof liffApi.isLoggedIn === 'function' ? liffApi.isLoggedIn() : false;
+    const isInClient = typeof liffApi.isInClient === 'function' ? liffApi.isInClient() : false;
+
+    console.log('LIFF initialized', LIFF_ID, { isLoggedIn, isInClient });
+
+    if (!isLoggedIn) {
+      if (isInClient) {
+        console.log('LINE client detected, user not logged in: redirecting to login');
+        liffApi.login({ redirectUri: window.location.href });
+        return false;
+      }
+      console.warn('Not logged into LINE client; profile access may not be available.');
     }
 
     return true;
   } catch (error) {
-    console.warn("LIFF initialization failed", error);
+    console.error('LIFF initialization failed', error);
     return false;
   }
 };
@@ -270,10 +256,21 @@ const initLiff = async () => {
 const loadLineMid = async () => {
   let mid = "";
   lineProfile.value = { displayName: "", pictureUrl: "" };
-  if (liff && typeof liff.getProfile === "function") {
-    console.log("Initializing LIFF with ID:", LIFF_ID);
+  const liffApi = globalThis.liff || liff;
+
+  const isLoggedIn = typeof liffApi?.isLoggedIn === "function" ? liffApi.isLoggedIn() : false;
+  const isInClient = typeof liffApi?.isInClient === "function" ? liffApi.isInClient() : false;
+
+  if (!isLoggedIn && !isInClient) {
+    console.warn("LIFF not logged in and not in LINE client, profile is unavailable.");
+    lineMid.value = mid;
+    return mid;
+  }
+
+  if (liffApi && typeof liffApi.getProfile === "function") {
+    console.log("Getting LIFF profile with ID:", LIFF_ID, { isLoggedIn, isInClient });
     try {
-      const profile = await liff.getProfile();
+      const profile = await liffApi.getProfile();
       console.log("LIFF profile loaded:", profile);
       if (profile?.userId) {
         mid = profile.userId;
@@ -284,7 +281,13 @@ const loadLineMid = async () => {
       };
     } catch (err) {
       console.warn("LIFF profile not available", err);
+      if (!isLoggedIn && isInClient && typeof liffApi.login === "function") {
+        console.log("Logging in via LIFF to get profile...");
+        liffApi.login({ redirectUri: window.location.href });
+      }
     }
+  } else {
+    console.warn("LIFF getProfile API not available");
   }
 
   lineMid.value = mid;
