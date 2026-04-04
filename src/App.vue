@@ -268,6 +268,7 @@ const initLiff = async () => {
 };
 
 const loadLineMid = async () => {
+  console.log(LIFF_ID);
   let mid = "";
   lineProfile.value = { displayName: "", pictureUrl: "" };
 
