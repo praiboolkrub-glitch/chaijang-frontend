@@ -174,7 +174,6 @@ import {
   createTransaction,
   fetchUserByLineMid,
 } from "./api";
-import liff from "@line/liff";
 
 const pages = [
   { key: "transactions", label: "Transactions" },
@@ -207,7 +206,7 @@ const currentUser = ref(null);
 const pendingUser = ref(null);
 const loginChecked = ref(false);
 const liffLoginAttempted = ref(false);
-
+const liff = window.liff; // Access LIFF from global scope
 const LIFF_ID = import.meta.env.VITE_LIFF_ID || "YOUR_LIFF_ID";
 if (!import.meta.env.VITE_LIFF_ID || LIFF_ID === "YOUR_LIFF_ID") {
   console.warn(
@@ -284,6 +283,8 @@ const loadLineMid = async () => {
     lineMid.value = mid;
     return mid;
   }
+
+  await liff.init({ liffId: LIFF_ID });
 
   if (liff && typeof liff.getProfile === "function") {
     console.log("Getting LIFF profile with ID:", LIFF_ID, {
@@ -493,7 +494,7 @@ const handleUserReady = async (user) => {
 onMounted(async () => {
   setPageFromPath();
   window.addEventListener("popstate", handlePopState);
-  await initLiff();
+  // await initLiff();
   await checkCurrentUser();
 });
 </script>
