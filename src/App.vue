@@ -216,7 +216,7 @@ if (!import.meta.env.VITE_LIFF_ID || LIFF_ID === "YOUR_LIFF_ID") {
 }
 
 const loadLiffScript = async () => {
-  if (globalThis.liff) {
+  if (liff) {
     return;
   }
   throw new Error(
@@ -228,17 +228,16 @@ const initLiff = async () => {
   await loadLiffScript();
 
   try {
-    const liffApi = globalThis.liff || liff;
-    if (!liffApi || typeof liffApi.init !== "function") {
+    if (!liff || typeof liff.init !== "function") {
       throw new Error("LIFF SDK not available");
     }
 
-    await liffApi.init({ liffId: LIFF_ID });
+    await liff.init({ liffId: LIFF_ID });
 
     const isLoggedIn =
-      typeof liffApi.isLoggedIn === "function" ? liffApi.isLoggedIn() : false;
+      typeof liff.isLoggedIn === "function" ? liff.isLoggedIn() : false;
     const isInClient =
-      typeof liffApi.isInClient === "function" ? liffApi.isInClient() : false;
+      typeof liff.isInClient === "function" ? liff.isInClient() : false;
 
     console.log("LIFF initialized", LIFF_ID, { isLoggedIn, isInClient });
 
@@ -248,7 +247,7 @@ const initLiff = async () => {
           "LINE client detected, user not logged in: redirecting to login"
         );
         liffLoginAttempted.value = true;
-        liffApi.login({ redirectUri: window.location.href });
+        liff.login({ redirectUri: window.location.href });
         return false;
       } else if (!isInClient) {
         console.warn(
@@ -272,12 +271,11 @@ const initLiff = async () => {
 const loadLineMid = async () => {
   let mid = "";
   lineProfile.value = { displayName: "", pictureUrl: "" };
-  const liffApi = globalThis.liff || liff;
 
   const isLoggedIn =
-    typeof liffApi?.isLoggedIn === "function" ? liffApi.isLoggedIn() : false;
+    typeof liff?.isLoggedIn === "function" ? liff.isLoggedIn() : false;
   const isInClient =
-    typeof liffApi?.isInClient === "function" ? liffApi.isInClient() : false;
+    typeof liff?.isInClient === "function" ? liff.isInClient() : false;
 
   if (!isLoggedIn && !isInClient) {
     console.warn(
@@ -287,13 +285,13 @@ const loadLineMid = async () => {
     return mid;
   }
 
-  if (liffApi && typeof liffApi.getProfile === "function") {
+  if (liff && typeof liff.getProfile === "function") {
     console.log("Getting LIFF profile with ID:", LIFF_ID, {
       isLoggedIn,
       isInClient,
     });
     try {
-      const profile = await liffApi.getProfile();
+      const profile = await liff.getProfile();
       console.log("LIFF profile loaded:", profile);
       if (profile?.userId) {
         mid = profile.userId;

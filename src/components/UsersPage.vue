@@ -56,7 +56,7 @@ import { createUser, fetchHouseholds, updateUser } from '../api';
 const props = defineProps({
   lineMid: {
     type: String,
-    default: 'grnjvgml[o',
+    default: '',
   },
   lineProfile: {
     type: Object,
