@@ -283,7 +283,8 @@ const loadLineMid = async () => {
     lineMid.value = mid;
     return mid;
   }
-
+  console.log(LIFF_ID);
+  
   await liff.init({ liffId: LIFF_ID });
 
   if (liff && typeof liff.getProfile === "function") {
