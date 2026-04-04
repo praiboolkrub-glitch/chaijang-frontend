@@ -270,21 +270,6 @@ const initLiff = async () => {
 const loadLineMid = async () => {
   console.log(LIFF_ID);
   let mid = "";
-  lineProfile.value = { displayName: "", pictureUrl: "" };
-
-  const isLoggedIn =
-    typeof liff?.isLoggedIn === "function" ? liff.isLoggedIn() : false;
-  const isInClient =
-    typeof liff?.isInClient === "function" ? liff.isInClient() : false;
-
-  if (!isLoggedIn && !isInClient) {
-    console.warn(
-      "LIFF not logged in and not in LINE client, profile is unavailable."
-    );
-    lineMid.value = mid;
-    return mid;
-  }
-  console.log(LIFF_ID);
   
   await liff.init({ liffId: LIFF_ID });
 
