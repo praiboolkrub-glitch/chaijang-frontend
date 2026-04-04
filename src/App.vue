@@ -219,7 +219,9 @@ const loadLiffScript = async () => {
   if (globalThis.liff) {
     return;
   }
-  throw new Error("LIFF SDK not loaded; include the LIFF SDK script in index.html and reload the app.");
+  throw new Error(
+    "LIFF SDK not loaded; include the LIFF SDK script in index.html and reload the app."
+  );
 };
 
 const initLiff = async () => {
@@ -227,35 +229,41 @@ const initLiff = async () => {
 
   try {
     const liffApi = globalThis.liff || liff;
-    if (!liffApi || typeof liffApi.init !== 'function') {
-      throw new Error('LIFF SDK not available');
+    if (!liffApi || typeof liffApi.init !== "function") {
+      throw new Error("LIFF SDK not available");
     }
 
     await liffApi.init({ liffId: LIFF_ID });
 
-    const isLoggedIn = typeof liffApi.isLoggedIn === 'function' ? liffApi.isLoggedIn() : false;
-    const isInClient = typeof liffApi.isInClient === 'function' ? liffApi.isInClient() : false;
+    const isLoggedIn =
+      typeof liffApi.isLoggedIn === "function" ? liffApi.isLoggedIn() : false;
+    const isInClient =
+      typeof liffApi.isInClient === "function" ? liffApi.isInClient() : false;
 
-    console.log('LIFF initialized', LIFF_ID, { isLoggedIn, isInClient });
+    console.log("LIFF initialized", LIFF_ID, { isLoggedIn, isInClient });
 
     if (!isLoggedIn) {
       if (isInClient && !liffLoginAttempted.value) {
-        console.log('LINE client detected, user not logged in: redirecting to login');
+        console.log(
+          "LINE client detected, user not logged in: redirecting to login"
+        );
         liffLoginAttempted.value = true;
         liffApi.login({ redirectUri: window.location.href });
         return false;
       } else if (!isInClient) {
-        console.warn('Not in LINE client; cannot login automatically. Profile access may not be available.');
+        console.warn(
+          "Not in LINE client; cannot login automatically. Profile access may not be available."
+        );
         return true; // Continue without login for external browser
       } else {
-        console.warn('Login already attempted, skipping to prevent loop');
+        console.warn("Login already attempted, skipping to prevent loop");
         return false;
       }
     }
 
     return true;
   } catch (error) {
-    console.error('LIFF initialization failed', error);
+    console.error("LIFF initialization failed", error);
     statusMessage.value = `เกิดข้อผิดพลาดในการเริ่ม LIFF: ${error.message}`;
     return false;
   }
@@ -266,17 +274,24 @@ const loadLineMid = async () => {
   lineProfile.value = { displayName: "", pictureUrl: "" };
   const liffApi = globalThis.liff || liff;
 
-  const isLoggedIn = typeof liffApi?.isLoggedIn === "function" ? liffApi.isLoggedIn() : false;
-  const isInClient = typeof liffApi?.isInClient === "function" ? liffApi.isInClient() : false;
+  const isLoggedIn =
+    typeof liffApi?.isLoggedIn === "function" ? liffApi.isLoggedIn() : false;
+  const isInClient =
+    typeof liffApi?.isInClient === "function" ? liffApi.isInClient() : false;
 
   if (!isLoggedIn && !isInClient) {
-    console.warn("LIFF not logged in and not in LINE client, profile is unavailable.");
+    console.warn(
+      "LIFF not logged in and not in LINE client, profile is unavailable."
+    );
     lineMid.value = mid;
     return mid;
   }
 
   if (liffApi && typeof liffApi.getProfile === "function") {
-    console.log("Getting LIFF profile with ID:", LIFF_ID, { isLoggedIn, isInClient });
+    console.log("Getting LIFF profile with ID:", LIFF_ID, {
+      isLoggedIn,
+      isInClient,
+    });
     try {
       const profile = await liffApi.getProfile();
       console.log("LIFF profile loaded:", profile);
