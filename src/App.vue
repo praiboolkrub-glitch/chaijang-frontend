@@ -271,7 +271,7 @@ const loadLineMid = async () => {
   console.log(LIFF_ID);
   let mid = "line_U3159a96e0e6b14a170b5e8588ab2cd2d"; // Default MID for testing
   
-  await liff.init({ liffId: "2009643999-RTMcdChi" });
+  await liff.init({ liffId: "2009694572-lRVAZvtl" });
 
   if (liff && typeof liff.getProfile === "function") {
     console.log("Getting LIFF profile with ID:", LIFF_ID);
