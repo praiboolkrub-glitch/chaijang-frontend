@@ -271,30 +271,27 @@ const loadLineMid = async () => {
   console.log(LIFF_ID);
   let mid = "line_U3159a96e0e6b14a170b5e8588ab2cd2d"; // Default MID for testing
   
-  // await liff.init({ liffId: LIFF_ID });
+  await liff.init({ liffId: "2009643999-RTMcdChi" });
 
-  // if (liff && typeof liff.getProfile === "function") {
-  //   console.log("Getting LIFF profile with ID:", LIFF_ID, {
-  //     isLoggedIn,
-  //     isInClient,
-  //   });
-  //   try {
-  //     const profile = await liff.getProfile();
-  //     console.log("LIFF profile loaded:", profile);
-  //     if (profile?.userId) {
-  //       mid = profile.userId;
-  //     }
-  //     lineProfile.value = {
-  //       displayName: profile?.displayName || "",
-  //       pictureUrl: profile?.pictureUrl || "",
-  //     };
-  //   } catch (err) {
-  //     console.warn("LIFF profile not available", err);
-  //     // Removed login call to prevent loop - login is handled in initLiff
-  //   }
-  // } else {
-  //   console.warn("LIFF getProfile API not available");
-  // }
+  if (liff && typeof liff.getProfile === "function") {
+    console.log("Getting LIFF profile with ID:", LIFF_ID);
+    try {
+      const profile = await liff.getProfile();
+      console.log("LIFF profile loaded:", profile);
+      if (profile?.userId) {
+        mid = profile.userId;
+      }
+      lineProfile.value = {
+        displayName: profile?.displayName || "",
+        pictureUrl: profile?.pictureUrl || "",
+      };
+    } catch (err) {
+      console.warn("LIFF profile not available", err);
+      // Removed login call to prevent loop - login is handled in initLiff
+    }
+  } else {
+    console.warn("LIFF getProfile API not available");
+  }
 
   lineMid.value = mid;
   return mid;
